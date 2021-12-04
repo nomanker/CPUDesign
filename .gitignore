@@ -1,0 +1,6 @@
+/MyCPU.cache
+/MyCPU.hw
+/MyCPU.ip*
+/MyCPU.sim
+*.wcfg
+*.out
