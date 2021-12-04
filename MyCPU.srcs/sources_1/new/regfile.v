@@ -18,7 +18,7 @@ reg[31:0] regs[0:31];
 
 integer i;
 initial begin
-    regs[0]=32'h0000_0000;
+    // regs[0]=32'h0000_0000;
     regs[1]=32'h0000_0001;
     for (i=2; i<32; i=i+1) begin
         regs[i]=regs[i-1]+32'h0000_0001;

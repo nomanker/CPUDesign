@@ -13,25 +13,27 @@
 `define RstEnable 1'b1
 `define RstDisable 1'b0
 //alu
-`define AluOpBus 3:0
+`define AluOpBus 4:0
 
 //alu_op
-`define ADD_OP 4'b0000
-`define SUB_OP 4'b0001
-`define SLT_OP 4'b0010
-`define SLTU_OP 4'b0011
-`define AND_OP 4'b0100
-`define NOR_OP 4'b0101
-`define OR_OP 4'b0110
-`define XOR_OP 4'b0111
-`define SLL_OP 4'b1000
-`define SRL_OP 4'b1001
-`define SRA_OP 4'b1010
-`define LUI_OP 4'b1011
-`define ADDU_OP 4'b1100
-`define SUBU_OP 4'b1101
-`define ADDIU_OP 4'b1110
-`define NOP_OP 4'b1111
+`define ADD_OP   5'b00000
+`define SUB_OP   5'b00001
+`define SLT_OP   5'b00010
+`define SLTU_OP  5'b00011
+`define AND_OP   5'b00100
+`define NOR_OP   5'b00101
+`define OR_OP    5'b00110
+`define XOR_OP   5'b00111
+`define SLL_OP   5'b01000
+`define SRL_OP   5'b01001
+`define SRA_OP   5'b01010
+`define LUI_OP   5'b01011
+`define ADDU_OP  5'b01100
+`define SUBU_OP  5'b01101
+`define ADDIU_OP 5'b01110
+`define NOP_OP   5'b01111
+`define LW_OP   5'b10000
+`define SW_OP   5'b10001
 
 //指令=====操作码
 
@@ -50,6 +52,10 @@
 
 `define EXE_ADD 6'b100_000
 `define EXE_ADDU 6'b100_001
+//lw和sw指令
+`define EXE_LW 6'b100_011
+`define EXE_SW 6'b101_011
+
 `define EXE_ADDIU 6'b001_001
 `define EXE_SUB 6'b100_010
 `define EXE_SUBU 6'b100_011
@@ -78,6 +84,3 @@
 
 `define InstValid 1'b0
 `define InstInvalid 1'b1
-`define AluOpBus 3:0
-
-

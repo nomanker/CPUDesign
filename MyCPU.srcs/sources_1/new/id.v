@@ -15,7 +15,9 @@ module id(
            output reg[`RegBus] reg1_o,
            output reg[`RegBus] reg2_o,
            output reg[`RegAddrBus] wd_o,
-           output reg   wreg_o
+           output reg   wreg_o,
+           //增加的新信号
+           output wire[`RegBus] inst_o
        );
 wire[5:0] op= inst_i[31:26];
 wire[4:0] op2 = inst_i[10:6];
@@ -23,6 +25,10 @@ wire[5:0] op3 = inst_i[5:0];
 wire[4:0] op4 = inst_i[20:16];
 reg[`RegBus] imm;
 reg instvalid;
+
+//inst_o的值就是译码阶段的指令
+assign inst_o = inst_i;
+
 always @(*) begin
     // 复位信号有效，代表机器是关机的状态
     if(rst==`RstEnable) begin
@@ -146,6 +152,22 @@ always @(*) begin
                 reg2_read_o <= 1'b0;
                 imm <= {{16{inst_i[15]}}, inst_i[15:0]};
                 wd_o <= inst_i[20:16];
+                instvalid <= `InstValid;
+            end
+            `EXE_LW:begin
+                wreg_o <= `WriteEnable;
+                aluop_o <= `LW_OP;
+                reg1_read_o <= 1'b1;
+                reg2_read_o <= 1'b0;
+                wd_o <= inst_i[20:16];
+                instvalid <= `InstValid;
+            end
+
+            `EXE_SW:begin
+                wreg_o <= `WriteDisable;
+                aluop_o <= `SW_OP;
+                reg1_read_o <= 1'b1;
+                reg2_read_o <= 1'b1;
                 instvalid <= `InstValid;
             end
             default: begin
