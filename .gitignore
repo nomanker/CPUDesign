@@ -2,5 +2,6 @@
 /MyCPU.hw
 /MyCPU.ip*
 /MyCPU.sim
+/MyCPU.runs
 *.wcfg
 *.out

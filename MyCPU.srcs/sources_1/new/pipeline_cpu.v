@@ -10,7 +10,7 @@ module pipeline_cpu(
            input wire [`RegBus] ram_data_i,
            output wire [`RegBus] ram_addr_o,
            output wire [`RegBus] ram_data_o,
-           output wire [3:0] ram_we_o,
+           output wire  ram_we_o,
            output wire ram_ce_o 
        );
 
@@ -47,6 +47,10 @@ wire[`RegBus] ex_link_address_i;
 wire[`RegBus] ex_wdata_o;
 wire[`RegAddrBus] ex_wd_o;
 wire ex_wreg_o;
+wire[`RegBus] ex_hi_o;
+wire[`RegBus] ex_lo_o;
+wire ex_whilo_o;
+
 //lw和sw需求
 wire[`AluOpBus] ex_aluop_o;
 wire[`RegBus] ex_mem_addr_o;
@@ -57,6 +61,10 @@ wire[`RegBus] ex_reg2_o;
 wire[`RegBus] mem_wdata_i;
 wire[`RegAddrBus] mem_wd_i;
 wire mem_wreg_i;
+wire[`RegBus] mem_hi_i;
+wire[`RegBus] mem_lo_i;
+wire mem_whilo_i;
+
 //lw和sw的需求
 wire[`AluOpBus] mem_aluop_i;
 wire[`RegBus] mem_mem_addr_i;
@@ -67,12 +75,18 @@ wire[`RegBus] mem_wdata_o;
 wire[`RegAddrBus] mem_wd_o;
 wire mem_wreg_o;
 
+wire[`RegBus] mem_hi_o;
+wire[`RegBus] mem_lo_o;
+wire mem_whilo_o;
 
 //连接mem/wb模块和regfile模块
 wire[`RegBus] wb_wdata_i;
 wire[`RegAddrBus] wb_wd_i;
 wire wb_wreg_i;
 
+wire[`RegBus] wb_hi_i;
+wire[`RegBus] wb_lo_i;
+wire wb_whilo_i;
 //连接译码阶段的Id模块和通用寄存器Regfile模块
 wire reg1_read;
 wire reg2_read;
@@ -80,6 +94,10 @@ wire[`RegAddrBus] reg1_addr;
 wire[`RegAddrBus] reg2_addr;
 wire[`RegBus] reg1_data;
 wire[`RegBus] reg2_data;
+
+//连接执行阶段与hilo模块的输出，读取HI、LO寄存器
+wire[`RegBus] 	hi;
+wire[`RegBus]   lo;
 
 //跳转指令的需求
 wire is_in_delayslot_i;
@@ -136,7 +154,19 @@ id id0(
 	   .branch_flag_o(id_branch_flag_o),
 	   .branch_target_address_o(branch_target_address),       
 	   .link_addr_o(id_link_address_o),
-	   .is_in_delayslot_o(id_is_in_delayslot_o)
+	   .is_in_delayslot_o(id_is_in_delayslot_o),
+
+
+
+       //处于执行阶段的指令要写入的目的寄存器信息
+		.ex_wreg_i(ex_wreg_o),
+		.ex_wdata_i(ex_wdata_o),
+		.ex_wd_i(ex_wd_o),
+
+        //处于访存阶段的指令要写入的目的寄存器信息
+		.mem_wreg_i(mem_wreg_o),
+		.mem_wdata_i(mem_wdata_o),
+		.mem_wd_i(mem_wd_o)
 
    );
 
@@ -174,10 +204,23 @@ ex ex0(
        .wd_i(ex_wd_i),
        .wreg_i(ex_wreg_i),
        .inst_i(ex_inst_i),
+		.hi_i(hi),
+		.lo_i(lo),
+
+	   .wb_hi_i(wb_hi_i),
+	   .wb_lo_i(wb_lo_i),
+	   .wb_whilo_i(wb_whilo_i),
+	   .mem_hi_i(mem_hi_o),
+	   .mem_lo_i(mem_lo_o),
+	   .mem_whilo_i(mem_whilo_o),
        //EX模块的输出送到EX/MEM模块
        .alu_result(ex_wdata_o),
        .wd_o(ex_wd_o),
        .wreg_o(ex_wreg_o),
+       .hi_o(ex_hi_o),
+	   .lo_o(ex_lo_o),
+	   .whilo_o(ex_whilo_o),
+		
 
         //lw和sw
        .aluop_o(ex_aluop_o),
@@ -195,6 +238,9 @@ ex_mem ex_mem0(
     .ex_wdata(ex_wdata_o),
     .ex_wd(ex_wd_o),
     .ex_wreg(ex_wreg_o),
+    .ex_hi(ex_hi_o),
+	.ex_lo(ex_lo_o),
+	.ex_whilo(ex_whilo_o),
 
 
     .ex_aluop(ex_aluop_o),
@@ -206,6 +252,9 @@ ex_mem ex_mem0(
     .mem_wdata(mem_wdata_i),
     .mem_wd(mem_wd_i),
     .mem_wreg(mem_wreg_i),
+    .mem_hi(mem_hi_i),
+	.mem_lo(mem_lo_i),
+	.mem_whilo(mem_whilo_i),	
 
 
     .mem_aluop(mem_aluop_i),
@@ -225,6 +274,10 @@ mem mem0(
     .aluop_i(mem_aluop_i),
 	.mem_addr_i(mem_mem_addr_i),
 	.reg2_i(mem_reg2_i),
+    
+    .hi_i(mem_hi_i),
+	.lo_i(mem_lo_i),
+	.whilo_i(mem_whilo_i),	
 
 
 
@@ -232,6 +285,10 @@ mem mem0(
     .wdata_o(mem_wdata_o),
     .wd_o(mem_wd_o),
     .wreg_o(mem_wreg_o),
+    .hi_o(mem_hi_o),
+	.lo_o(mem_lo_o),
+	.whilo_o(mem_whilo_o),
+
     //送到memory模块的信息
     .mem_addr_o(ram_addr_o),
     .mem_we_o(ram_we_o),
@@ -249,9 +306,29 @@ mem_wb mem_wb0(
     .mem_wdata(mem_wdata_o),
     .mem_wd(mem_wd_o),
     .mem_wreg(mem_wreg_o),
+    .mem_hi(mem_hi_o),
+	.mem_lo(mem_lo_o),
+	.mem_whilo(mem_whilo_o),
     .wb_wdata(wb_wdata_i),
     .wb_wd(wb_wd_i),
-    .wb_wreg(wb_wreg_i)
+    .wb_wreg(wb_wreg_i),
+    .wb_hi(wb_hi_i),
+	.wb_lo(wb_lo_i),
+	.wb_whilo(wb_whilo_i)	
+);
+
+hilo_reg hilo_reg0(
+		.clk(clk),
+		.rst(rst),
+	
+		//写端口
+		.we(wb_whilo_i),
+		.hi_i(wb_hi_i),
+		.lo_i(wb_lo_i),
+	
+		//读端口1
+		.hi_o(hi),
+		.lo_o(lo)	
 );
 
 regfile regfile0(

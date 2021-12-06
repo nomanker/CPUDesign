@@ -28,7 +28,18 @@ module id(
            output reg branch_flag_o,
            output reg[`RegBus] branch_target_address_o,
            output reg[`RegBus] link_addr_o,
-           output reg  is_in_delayslot_o
+           output reg  is_in_delayslot_o,
+
+           //数据相关，前推技术问题解决
+           //处于执行阶段的指令的运行结果
+           input wire ex_wreg_i,
+           input wire[`RegBus] ex_wdata_i,
+           input wire[`RegAddrBus] ex_wd_i,
+
+           //处于访问阶段的指令的运行结果
+           input wire mem_wreg_i,
+           input wire[`RegBus]  mem_wdata_i,
+           input wire[`RegAddrBus] mem_wd_i
        );
 wire[5:0] op= inst_i[31:26];
 wire[4:0] op2 = inst_i[10:6];
@@ -176,7 +187,42 @@ always @(*) begin
                                 next_inst_in_delayslot_o <= `InDelaySlot;
                                 instvalid <= `InstValid;
                             end
+                            `EXE_SLLV: begin
+                                wreg_o <= `WriteEnable;
+                                aluop_o <= `SLL_OP;
+                                reg1_read_o <= 1'b1;
+                                reg2_read_o <= 1'b1;
+                                instvalid <= `InstValid;
+                            end
+                            `EXE_SRLV: begin
+                                wreg_o <= `WriteEnable;
+                                aluop_o <= `SRL_OP;
+                                reg1_read_o <= 1'b1;
+                                reg2_read_o <= 1'b1;
+                                instvalid <= `InstValid;
+                            end
+                            `EXE_SRAV: begin
+                                wreg_o <= `WriteEnable;
+                                aluop_o <= `SRA_OP;
+                                reg1_read_o <= 1'b1;
+                                reg2_read_o <= 1'b1;
+                                instvalid <= `InstValid;
+                            end
 
+                            `EXE_MULT: begin
+                                wreg_o <= `WriteDisable;
+                                aluop_o <= `MULT_OP;
+                                reg1_read_o <= 1'b1;
+                                reg2_read_o <= 1'b1;
+                                instvalid <= `InstValid;
+                            end
+                            `EXE_MULTU: begin
+                                wreg_o <= `WriteDisable;
+                                aluop_o <= `MULTU_OP;
+                                reg1_read_o <= 1'b1;
+                                reg2_read_o <= 1'b1;
+                                instvalid <= `InstValid;
+                            end
 
                             default: begin
                             end
@@ -185,6 +231,33 @@ always @(*) begin
                     default: begin
                     end
                 endcase
+            end
+            `EXE_ORI:			begin                        //ORI指令
+                wreg_o <= `WriteEnable;
+                aluop_o <= `OR_OP;
+                reg1_read_o <= 1'b1;
+                reg2_read_o <= 1'b0;
+                imm <= {16'h0, inst_i[15:0]};
+                wd_o <= inst_i[20:16];
+                instvalid <= `InstValid;
+            end
+            `EXE_ANDI:		begin
+                wreg_o <= `WriteEnable;
+                aluop_o <= `AND_OP;
+                reg1_read_o <= 1'b1;
+                reg2_read_o <= 1'b0;
+                imm <= {16'h0, inst_i[15:0]};
+                wd_o <= inst_i[20:16];
+                instvalid <= `InstValid;
+            end
+            `EXE_XORI:			begin
+                wreg_o <= `WriteEnable;
+                aluop_o <= `XOR_OP;
+                reg1_read_o <= 1'b1;
+                reg2_read_o <= 1'b0;
+                imm <= {16'h0, inst_i[15:0]};
+                wd_o <= inst_i[20:16];
+                instvalid <= `InstValid;
             end
             `EXE_LUI: begin
                 wreg_o<=`WriteEnable;
@@ -257,6 +330,35 @@ always @(*) begin
                     next_inst_in_delayslot_o <= `InDelaySlot;
                 end
             end
+            //function2
+            `EXE_SLTI:	begin
+                wreg_o <= `WriteEnable;
+                aluop_o <= `SLT_OP;
+                reg1_read_o <= 1'b1;
+                reg2_read_o <= 1'b0;
+                imm <= {{16{inst_i[15]}}, inst_i[15:0]};
+                wd_o <= inst_i[20:16];
+                instvalid <= `InstValid;
+            end
+            `EXE_SLTIU:	begin
+                wreg_o <= `WriteEnable;
+                aluop_o <= `SLTU_OP;
+                reg1_read_o <= 1'b1;
+                reg2_read_o <= 1'b0;
+                imm <= {{16{inst_i[15]}}, inst_i[15:0]};
+                wd_o <= inst_i[20:16];
+                instvalid <= `InstValid;
+            end
+            `EXE_ADDI:	begin
+                wreg_o <= `WriteEnable;
+                aluop_o <= `ADDI_OP;
+                reg1_read_o <= 1'b1;
+                reg2_read_o <= 1'b0;
+                imm <= {{16{inst_i[15]}}, inst_i[15:0]};
+                wd_o <= inst_i[20:16];
+                instvalid <= `InstValid;
+            end
+
             default: begin
             end
         endcase //case op
@@ -298,6 +400,12 @@ always @(*) begin
     if(rst==`RstEnable) begin
         reg1_o<=`ZeroWord;
     end
+    else if((reg1_read_o==1'b1)&&(ex_wreg_i==1'b1)&&(ex_wd_i==reg1_addr_o))begin
+        reg1_o<=ex_wdata_i;
+    end
+    else if((reg1_read_o==1'b1)&&(mem_wreg_i==1'b1)&&(mem_wd_i==reg1_addr_o))begin
+        reg1_o<=mem_wdata_i;
+    end
     else if(reg1_read_o==1'b1) begin
         reg1_o<=reg1_data_i;
     end
@@ -312,6 +420,12 @@ end
 always @(*) begin
     if(rst==`RstEnable) begin
         reg2_o<=`ZeroWord;
+    end
+    else if((reg2_read_o==1'b1)&&(ex_wreg_i==1'b1)&&(ex_wd_i==reg2_addr_o))begin
+        reg2_o<=ex_wdata_i;
+    end
+    else if((reg2_read_o==1'b1)&&(mem_wreg_i==1'b1)&&(mem_wd_i==reg2_addr_o))begin
+        reg2_o<=mem_wdata_i;
     end
     else if(reg2_read_o==1'b1) begin
         reg2_o<=reg2_data_i;

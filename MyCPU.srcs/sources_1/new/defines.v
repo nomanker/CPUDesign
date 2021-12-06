@@ -20,32 +20,48 @@
 `define InDelaySlot 1'b1
 `define NotInDelaySlot 1'b0
 //alu
-`define AluOpBus 4:0
+`define AluOpBus 6:0
 
 //alu_op
-`define ADD_OP   5'b00000
-`define SUB_OP   5'b00001
-`define SLT_OP   5'b00010
-`define SLTU_OP  5'b00011
-`define AND_OP   5'b00100
-`define NOR_OP   5'b00101
-`define OR_OP    5'b00110
-`define XOR_OP   5'b00111
-`define SLL_OP   5'b01000
-`define SRL_OP   5'b01001
-`define SRA_OP   5'b01010
-`define LUI_OP   5'b01011
-`define ADDU_OP  5'b01100
-`define SUBU_OP  5'b01101
-`define ADDIU_OP 5'b01110
-`define NOP_OP   5'b01111
-`define LW_OP    5'b10000
-`define SW_OP    5'b10001
+`define ADD_OP   6'b000000
+`define SUB_OP   6'b000001
+`define SLT_OP   6'b000010
+`define SLTU_OP  6'b000011
+`define AND_OP   6'b000100
+`define NOR_OP   6'b000101
+`define OR_OP    6'b000110
+`define XOR_OP   6'b000111
+`define SLL_OP   6'b001000
+`define SRL_OP   6'b001001
+`define SRA_OP   6'b001010
+`define LUI_OP   6'b001011
+`define ADDU_OP  6'b001100
+`define SUBU_OP  6'b001101
+`define ADDIU_OP 6'b001110
+`define NOP_OP   6'b001111
+`define LW_OP    6'b010000
+`define SW_OP    6'b010001
 //跳转操作码
-`define BEQ_OP  5'b1001_0
-`define BNE_OP  5'b1001_1
-`define JAL_OP  5'b1010_0
-`define JR_OP   5'b1010_1
+`define BEQ_OP  6'b01001_0
+`define BNE_OP  6'b01001_1
+`define JAL_OP  6'b01010_0
+`define JR_OP   6'b01010_1
+
+//function2新增操作码
+`define ADDI_OP  6'b01011_0
+`define SLTI_OP  6'b01011_1
+`define SLTIU_OP 6'b01100_0
+`define ANDI_OP  6'b01100_1
+`define ORI_OP   6'b01101_0
+`define XORI_OP  6'b01101_1
+`define SLLV_OP  6'b01110_0
+`define SRAV_OP  6'b01110_1
+`define SRLV_OP  6'b01111_0
+`define DIV_OP   6'b01111_1
+`define DIVU_OP  6'b10000_0
+`define MULT_OP  6'b10000_1
+`define MULTU_OP  6'b10001_0
+
 
 //指令=====操作码
 
@@ -53,14 +69,22 @@
 `define EXE_OR 6'b100101
 `define EXE_XOR 6'b100110
 `define EXE_NOR 6'b100111
+`define EXE_ANDI 6'b001100
+`define EXE_ORI  6'b001101
+`define EXE_XORI 6'b001110
 `define EXE_LUI 6'b001111
 
 `define EXE_SLL 6'b000_000
+`define EXE_SLLV  6'b000100
 `define EXE_SRL 6'b000_010
+`define EXE_SRLV  6'b000110
 `define EXE_SRA 6'b000_011
+`define EXE_SRAV  6'b000111
 
 `define EXE_SLT 6'b101_010
 `define EXE_SLTU 6'b101_011
+`define EXE_SLTI  6'b001010
+`define EXE_SLTIU  6'b001011 
 
 `define EXE_ADD 6'b100_000
 `define EXE_ADDU 6'b100_001
@@ -77,7 +101,13 @@
 `define EXE_ADDIU 6'b001_001
 `define EXE_SUB 6'b100_010
 `define EXE_SUBU 6'b100_011
+`define EXE_ADDI  6'b001000
 `define EXE_SPECIAL_INST 6'b000_000
+
+//乘法
+`define EXE_MULT  6'b0011000
+`define EXE_MULTU  6'b0011001
+
 //全局
 `define RstEnable 1'b1
 `define RstDisable 1'b0
