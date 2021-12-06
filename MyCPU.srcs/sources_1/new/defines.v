@@ -12,6 +12,13 @@
 `define RegBus 31:0
 `define RstEnable 1'b1
 `define RstDisable 1'b0
+
+//全局，分支跳转
+`define Branch 1'b1
+`define NotBranch 1'b0
+//是否是延迟槽指令
+`define InDelaySlot 1'b1
+`define NotInDelaySlot 1'b0
 //alu
 `define AluOpBus 4:0
 
@@ -32,8 +39,13 @@
 `define SUBU_OP  5'b01101
 `define ADDIU_OP 5'b01110
 `define NOP_OP   5'b01111
-`define LW_OP   5'b10000
-`define SW_OP   5'b10001
+`define LW_OP    5'b10000
+`define SW_OP    5'b10001
+//跳转操作码
+`define BEQ_OP  5'b1001_0
+`define BNE_OP  5'b1001_1
+`define JAL_OP  5'b1010_0
+`define JR_OP   5'b1010_1
 
 //指令=====操作码
 
@@ -55,6 +67,12 @@
 //lw和sw指令
 `define EXE_LW 6'b100_011
 `define EXE_SW 6'b101_011
+//分支跳转指令、BEQ、BNE、JAR、JR。
+`define EXE_BEQ  6'b000100
+`define EXE_BNE  6'b000101
+`define EXE_JAL  6'b000011
+`define EXE_JR  6'b001000
+
 
 `define EXE_ADDIU 6'b001_001
 `define EXE_SUB 6'b100_010

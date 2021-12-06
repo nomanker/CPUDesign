@@ -8,6 +8,10 @@ module ex(
            //新增输入接口inst_i,他的值就是当前处于执行阶段的指令
            input wire[`RegBus]    inst_i,
 
+           //是否转移、以及link address
+	        input wire[`RegBus]           link_address_i,
+	        input wire                    is_in_delayslot_i,
+
            output reg[`RegBus] alu_result,
            output reg[`RegAddrBus] wd_o,
            output reg wreg_o,
@@ -78,6 +82,9 @@ always @(*) begin
             end
             `LUI_OP: begin
                 alu_result<={alu_src2[15:0],16'd0};
+            end
+            `JAL_OP:begin
+                alu_result <= link_address_i;
             end
             default: begin
                 alu_result<=`ZeroWord;

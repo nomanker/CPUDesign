@@ -1,30 +1,15 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company:
-// Engineer:
-//
-// Create Date: 2021/10/26 08:25:33
-// Design Name:
-// Module Name: pc
-// Project Name:
-// Target Devices:
-// Tool Versions:
-// Description:
-//
-// Dependencies:
-//
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-//
-//////////////////////////////////////////////////////////////////////////////////
-
+`include"defines.v"
 
 module pc(
            input wire rst,
            input wire clk,
            output reg ce,
-           output reg[31:0] pc
+           output reg[31:0] pc,
+
+           //来自译码阶段ID模块的信息
+           input wire  branch_flag_i,
+           input wire[`RegBus] branch_target_address_i
        );
 
 always @(posedge clk) begin
@@ -37,11 +22,15 @@ always @(posedge clk) begin
 end
 
 always @(posedge clk) begin
-    if(ce==0) begin
+    if(ce==`ChipDisable) begin
         pc<=32'h0;
     end
     else begin
-        pc<=pc+32'h4;
+        if(branch_flag_i==`Branch) begin
+            pc <= branch_target_address_i;
+        end else begin
+            pc<=pc+32'h4;
+        end
     end
 end
 endmodule

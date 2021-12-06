@@ -15,15 +15,9 @@ module pipeline_cpu(
        );
 
 
-pc pc_reg0(
-       .clk(clk),
-       .rst(rst),
-       .pc(rom_addr_o),
-       .ce(rom_ce_o)
-   );
-
 
 //连接IF/ID和ID模块
+wire[`InstAddrBus] id_pc_i;
 wire [`InstBus] id_inst_i;
 
 
@@ -35,6 +29,8 @@ wire[`RegBus] id_reg2_o;
 wire[`RegAddrBus] id_wd_o;
 wire id_wreg_o;
 wire[`RegBus] id_inst_o;
+wire id_is_in_delayslot_o;
+wire[`RegBus] id_link_address_o;
 
 
 //连接id/ex模块和ex模块
@@ -44,6 +40,8 @@ wire[`RegBus] ex_reg2_i;
 wire[`RegAddrBus] ex_wd_i;
 wire ex_wreg_i;
 wire[`RegBus] ex_inst_i;
+wire ex_is_in_delayslot_i;	
+wire[`RegBus] ex_link_address_i;
 
 //连接ex模块和ex/mem模块
 wire[`RegBus] ex_wdata_o;
@@ -83,12 +81,30 @@ wire[`RegAddrBus] reg2_addr;
 wire[`RegBus] reg1_data;
 wire[`RegBus] reg2_data;
 
+//跳转指令的需求
+wire is_in_delayslot_i;
+wire is_in_delayslot_o;
+wire next_inst_in_delayslot_o;
+wire id_branch_flag_o;
+wire[`RegBus] branch_target_address;
+
+pc pc_reg0(
+       .clk(clk),
+       .rst(rst),
+       .branch_flag_i(id_branch_flag_o),
+	   .branch_target_address_i(branch_target_address),
+       .pc(rom_addr_o),
+       .ce(rom_ce_o)
+);
+
 
 if_id if_id0(
           .rst(rst),
           .clk(clk),
           .if_inst(rom_data_i),
-          .id_inst(id_inst_i)
+          .id_inst(id_inst_i),
+          .if_pc(rom_addr_o),
+          .id_pc(id_pc_i)
       );
 
 id id0(
@@ -98,6 +114,7 @@ id id0(
     //    .mem_wdata_i(mem_wdata_o),
     //    .mem_wd_i(mem_wd_o),
 
+       .pc_i(id_pc_i),
        .inst_i(id_inst_i),
        .aluop_o(id_aluop_o),
        .reg1_o(id_reg1_o),
@@ -111,7 +128,16 @@ id id0(
        .reg1_addr_o(reg1_addr),
        .reg2_addr_o(reg2_addr),
        .reg1_data_i(reg1_data),
-       .reg2_data_i(reg2_data)
+       .reg2_data_i(reg2_data),
+       //延迟槽
+       .is_in_delayslot_i(is_in_delayslot_i),
+
+       .next_inst_in_delayslot_o(next_inst_in_delayslot_o),	
+	   .branch_flag_o(id_branch_flag_o),
+	   .branch_target_address_o(branch_target_address),       
+	   .link_addr_o(id_link_address_o),
+	   .is_in_delayslot_o(id_is_in_delayslot_o)
+
    );
 
 id_ex id_ex0(
@@ -124,13 +150,19 @@ id_ex id_ex0(
           .id_wd(id_wd_o),
           .id_wreg(id_wreg_o),
           .id_inst(id_inst_o),
+          .id_link_address(id_link_address_o),
+		  .id_is_in_delayslot(id_is_in_delayslot_o),
+		  .next_inst_in_delayslot_i(next_inst_in_delayslot_o),		
           //传递到执行阶段EX模块的信息
           .ex_aluop(ex_aluop_i),
           .ex_reg1(ex_reg1_i),
           .ex_reg2(ex_reg2_i),
           .ex_wd(ex_wd_i),
           .ex_wreg(ex_wreg_i),
-          .ex_inst(ex_inst_i)
+          .ex_inst(ex_inst_i),
+          .ex_link_address(ex_link_address_i),
+  	      .ex_is_in_delayslot(ex_is_in_delayslot_i),
+		  .is_in_delayslot_o(is_in_delayslot_i)	
       );
 
 ex ex0(
@@ -150,7 +182,9 @@ ex ex0(
         //lw和sw
        .aluop_o(ex_aluop_o),
 	   .mem_addr_o(ex_mem_addr_o),
-	   .reg2_o(ex_reg2_o)
+	   .reg2_o(ex_reg2_o),
+       .link_address_i(ex_link_address_i),
+	   .is_in_delayslot_i(ex_is_in_delayslot_i)
    );
 
 ex_mem ex_mem0(

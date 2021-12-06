@@ -16,14 +16,14 @@ module regfile(
 /*第一个数组代表的是位数，第二个数组代表的是一维数组0-31*/
 reg[31:0] regs[0:31];
 
-integer i;
-initial begin
-    // regs[0]=32'h0000_0000;
-    regs[1]=32'h0000_0001;
-    for (i=2; i<32; i=i+1) begin
-        regs[i]=regs[i-1]+32'h0000_0001;
-    end
-end
+// integer i;
+// initial begin
+//     // regs[0]=32'h0000_0000;
+//     regs[1]=32'h0000_0001;
+//     for (i=2; i<32; i=i+1) begin
+//         regs[i]=regs[i-1]+32'h0000_0001;
+//     end
+// end
 /*写信号处理*/
 always @(posedge clk) begin
     if (rst==1'b0) begin
