@@ -61,7 +61,10 @@
 `define DIVU_OP  6'b10000_0
 `define MULT_OP  6'b10000_1
 `define MULTU_OP  6'b10001_0
-
+`define MFHI_OP  6'b10001_1
+`define MTHI_OP  6'b10010_0
+`define MFLO_OP  6'b10010_1
+`define MTLO_OP  6'b10011_0
 
 //指令=====操作码
 
@@ -96,6 +99,11 @@
 `define EXE_BNE  6'b000101
 `define EXE_JAL  6'b000011
 `define EXE_JR  6'b001000
+//将hi或者lo寄存器的值转移到通用寄存器
+`define EXE_MFHI  6'b010000
+`define EXE_MTHI  6'b010001
+`define EXE_MFLO  6'b010010
+`define EXE_MTLO  6'b010011
 
 
 `define EXE_ADDIU 6'b001_001

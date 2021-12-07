@@ -52,6 +52,8 @@ wire[`RegBus] opdata2_mult;    //乘法操作中的乘数
 wire[`DoubleRegBus] hilo_temp;   //临时保存乘法的结果，宽度为64位
 reg[`DoubleRegBus] mulres;      //保存乘法的结果，宽度为64位
 
+//移动操作的结果
+reg[`RegBus] moveres;
 reg[`RegBus] HI;
 reg[`RegBus] LO;
 
@@ -112,6 +114,9 @@ assign mem_addr_o = alu_src1 +{{16{inst_i[15]}},inst_i[15:0]};
 //将该值通过
 assign reg2_o = alu_src2;
 
+/*****************************************数据移动指令*******************
+***********************************************************************
+**********************************************************************/
 
 always @(*) begin
     if(rst==`RstEnable) begin
@@ -164,6 +169,22 @@ always @(*) begin
                 whilo_o <= `WriteEnable;
                 hi_o <= mulres[63:32];
 			    lo_o <= mulres[31:0];	
+            end
+            `MFHI_OP: begin
+                alu_result <= HI;
+            end
+            `MFLO_OP: begin
+                alu_result <=LO;
+            end
+            `MTHI_OP:begin
+                whilo_o <=`WriteEnable;
+                hi_o <= alu_src1;
+		        lo_o <= LO;
+            end
+            `MTLO_OP: begin
+                whilo_o <=`WriteEnable;
+                hi_o <= HI;
+		        lo_o <= alu_src1;
             end
             default: begin
                 alu_result<=`ZeroWord;

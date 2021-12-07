@@ -224,6 +224,36 @@ always @(*) begin
                                 instvalid <= `InstValid;
                             end
 
+                            //数据移动指令
+                            `EXE_MFHI: begin
+                                wreg_o <= `WriteEnable;
+                                aluop_o <= `MFHI_OP;
+                                reg1_read_o <= 1'b0;
+                                reg2_read_o <= 1'b0;
+                                instvalid <= `InstValid;
+                            end
+                            `EXE_MFLO: begin
+                                wreg_o <= `WriteEnable;
+                                aluop_o <= `MFLO_OP;
+                                reg1_read_o <= 1'b0;
+                                reg2_read_o <= 1'b0;
+                                instvalid <= `InstValid;
+                            end
+                            `EXE_MTHI: begin
+                                wreg_o <= `WriteDisable;
+                                aluop_o <= `MTHI_OP;
+                                reg1_read_o <= 1'b1;
+                                reg2_read_o <= 1'b0;
+                                instvalid <= `InstValid;
+                            end
+                            `EXE_MTLO: begin
+                                wreg_o <= `WriteDisable;
+                                aluop_o <= `MTLO_OP;
+                                reg1_read_o <= 1'b1;
+                                reg2_read_o <= 1'b0;
+                                instvalid <= `InstValid;
+                            end
+
                             default: begin
                             end
                         endcase //endcase op3
