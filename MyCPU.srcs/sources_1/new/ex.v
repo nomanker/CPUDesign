@@ -15,6 +15,11 @@ module ex(
            input wire[`RegBus]           link_address_i,
            input wire                    is_in_delayslot_i,
 
+
+           //新增来自除法模块的输入
+           input  wire[`DoubleRegBus] div_result_i,
+           input wire   div_ready_i, 
+
            output reg[`RegBus] alu_result,
            output reg[`RegAddrBus] wd_o,
            output reg wreg_o,
@@ -43,7 +48,13 @@ module ex(
 
            output reg[`RegBus]           hi_o,
            output reg[`RegBus]           lo_o,
-           output reg                    whilo_o
+           output reg                    whilo_o,
+
+           //新增到除法输出魔魁啊的输出
+           output reg[`RegBus] div_opdata1_o,
+           output reg[`RegBus] div_opdata2_o,
+           output reg div_start_o,
+           output reg signed_div_o
 
        );
 wire[`RegBus] alu_src2_mux;
@@ -59,6 +70,10 @@ reg[`DoubleRegBus] mulres;      //保存乘法的结果，宽度为64位
 reg[`RegBus] moveres;
 reg[`RegBus] HI;
 reg[`RegBus] LO;
+
+
+//是否有用除法运算导致流水线暂停
+reg stallreq_for_div;
 
 
 assign alu_src2_mux = ((alu_control==`SUB_OP)||(alu_control==`SLT_OP)||(alu_control==`SUBU_OP))?(~alu_src2)+1:alu_src2;
@@ -132,7 +147,7 @@ always @(*) begin
     end
     else begin
         wd_o=wd_i;
-        wreg_o=wreg_i;
+        wreg_o=wreg_i;	
         case(alu_control)
             `ADD_OP,`SUB_OP,`ADDU_OP,`SUBU_OP,`ADDIU_OP,`ADDI_OP: begin
                 alu_result<=result_sum;
@@ -189,6 +204,11 @@ always @(*) begin
                 hi_o <= HI;
 		        lo_o <= alu_src1;
             end
+            `DIVU_OP,`DIV_OP:begin
+                whilo_o <= `WriteEnable;
+			    hi_o <= div_result_i[63:32];
+			    lo_o <= div_result_i[31:0];
+            end
             default: begin
                 alu_result<=`ZeroWord;
                 whilo_o <=`WriteDisable;
@@ -198,4 +218,73 @@ always @(*) begin
         endcase
     end
 end
+
+
+//暂停流水线
+always @(*) begin
+    stallreq=stallreq_for_div;
+end
+
+//DIV、DIVU指令	
+	always @ (*) begin
+		if(rst == `RstEnable) begin
+			stallreq_for_div <= `NoStop;
+	    div_opdata1_o <= `ZeroWord;
+			div_opdata2_o <= `ZeroWord;
+			div_start_o <= `DivStop;
+			signed_div_o <= 1'b0;
+		end else begin
+			stallreq_for_div <= `NoStop;
+	    div_opdata1_o <= `ZeroWord;
+			div_opdata2_o <= `ZeroWord;
+			div_start_o <= `DivStop;
+			signed_div_o <= 1'b0;	
+			case (alu_control) 
+				`DIV_OP:		begin
+					if(div_ready_i == `DivResultNotReady) begin
+	    			div_opdata1_o <= alu_src1;
+						div_opdata2_o <= alu_src2;
+						div_start_o <= `DivStart;
+						signed_div_o <= 1'b1;
+						stallreq_for_div <= `Stop;
+					end else if(div_ready_i == `DivResultReady) begin
+	    			div_opdata1_o <= alu_src1;
+						div_opdata2_o <= alu_src2;
+						div_start_o <= `DivStop;
+						signed_div_o <= 1'b1;
+						stallreq_for_div <= `NoStop;
+					end else begin						
+	    			div_opdata1_o <= `ZeroWord;
+						div_opdata2_o <= `ZeroWord;
+						div_start_o <= `DivStop;
+						signed_div_o <= 1'b0;
+						stallreq_for_div <= `NoStop;
+					end					
+				end
+				`DIVU_OP:		begin
+					if(div_ready_i == `DivResultNotReady) begin
+	    			div_opdata1_o <= alu_src1;
+						div_opdata2_o <= alu_src2;
+						div_start_o <= `DivStart;
+						signed_div_o <= 1'b0;
+						stallreq_for_div <= `Stop;
+					end else if(div_ready_i == `DivResultReady) begin
+	    			div_opdata1_o <= alu_src1;
+						div_opdata2_o <= alu_src2;
+						div_start_o <= `DivStop;
+						signed_div_o <= 1'b0;
+						stallreq_for_div <= `NoStop;
+					end else begin						
+	    			div_opdata1_o <= `ZeroWord;
+						div_opdata2_o <= `ZeroWord;
+						div_start_o <= `DivStop;
+						signed_div_o <= 1'b0;
+						stallreq_for_div <= `NoStop;
+					end					
+				end
+				default: begin
+				end
+			endcase
+		end
+	end	
 endmodule

@@ -11,7 +11,7 @@ module mips_sopc1_tb(
     initial begin
         rst=1;
         #100 rst =0;
-       #1000 $stop;
+        #6000 $stop;
     end
     mips_sopc1 mips_sopc10(.clk(clk),.rst(rst));
 endmodule

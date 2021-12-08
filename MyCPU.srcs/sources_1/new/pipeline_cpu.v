@@ -107,6 +107,15 @@ wire id_branch_flag_o;
 wire[`RegBus] branch_target_address;
 
 
+wire[`DoubleRegBus] div_result;
+wire div_ready;
+wire[`RegBus] div_opdata1;
+wire[`RegBus] div_opdata2;
+wire div_start;
+wire div_annul;
+wire signed_div;
+
+
 wire[5:0] stall;
 wire stallreq_from_id;	
 wire stallreq_from_ex;
@@ -215,6 +224,10 @@ ex ex0(
 		.hi_i(hi),
 		.lo_i(lo),
 
+        //除法模块
+        .div_result_i(div_result),
+		.div_ready_i(div_ready), 
+
 	   .wb_hi_i(wb_hi_i),
 	   .wb_lo_i(wb_lo_i),
 	   .wb_whilo_i(wb_whilo_i),
@@ -230,12 +243,20 @@ ex ex0(
 	   .whilo_o(ex_whilo_o),
 		
 
+        .div_opdata1_o(div_opdata1),
+		.div_opdata2_o(div_opdata2),
+		.div_start_o(div_start),
+		.signed_div_o(signed_div),	
+		
+
         //lw和sw
        .aluop_o(ex_aluop_o),
 	   .mem_addr_o(ex_mem_addr_o),
 	   .reg2_o(ex_reg2_o),
        .link_address_i(ex_link_address_i),
 	   .is_in_delayslot_i(ex_is_in_delayslot_i),
+
+       
        .stallreq(stallreq_from_ex)   
    );
 
@@ -364,6 +385,20 @@ regfile regfile0(
     .wdata(wb_wdata_i),
     .rdata1(reg1_data),
     .rdata2(reg2_data)
+);
+
+div div0(
+		.clk(clk),
+		.rst(rst),
+	
+		.signed_div_i(signed_div),
+		.opdata1_i(div_opdata1),
+		.opdata2_i(div_opdata2),
+		.start_i(div_start),
+		.annul_i(1'b0),
+	
+		.result_o(div_result),
+		.ready_o(div_ready)
 );
 
 endmodule
