@@ -9,7 +9,10 @@ module pc(
 
            //来自译码阶段ID模块的信息
            input wire  branch_flag_i,
-           input wire[`RegBus] branch_target_address_i
+           input wire[`RegBus] branch_target_address_i,
+
+           //流水线暂停机制
+           input wire[5:0] stall
        );
 
 always @(posedge clk) begin
@@ -24,13 +27,12 @@ end
 always @(posedge clk) begin
     if(ce==`ChipDisable) begin
         pc<=32'h0;
-    end
-    else begin
-        if(branch_flag_i==`Branch) begin
-            pc <= branch_target_address_i;
-        end else begin
-            pc<=pc+32'h4;
-        end
-    end
+    end else if(stall[0] == `NoStop) begin
+		if(branch_flag_i == `Branch) begin
+				pc <= branch_target_address_i;
+			end else begin
+	  		    pc <= pc + 4'h4;
+	  	end
+	end
 end
 endmodule

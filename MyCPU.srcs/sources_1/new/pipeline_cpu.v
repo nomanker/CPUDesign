@@ -106,9 +106,15 @@ wire next_inst_in_delayslot_o;
 wire id_branch_flag_o;
 wire[`RegBus] branch_target_address;
 
+
+wire[5:0] stall;
+wire stallreq_from_id;	
+wire stallreq_from_ex;
+
 pc pc_reg0(
        .clk(clk),
        .rst(rst),
+       .stall(stall),
        .branch_flag_i(id_branch_flag_o),
 	   .branch_target_address_i(branch_target_address),
        .pc(rom_addr_o),
@@ -119,6 +125,7 @@ pc pc_reg0(
 if_id if_id0(
           .rst(rst),
           .clk(clk),
+          .stall(stall),
           .if_inst(rom_data_i),
           .id_inst(id_inst_i),
           .if_pc(rom_addr_o),
@@ -166,13 +173,14 @@ id id0(
         //处于访存阶段的指令要写入的目的寄存器信息
 		.mem_wreg_i(mem_wreg_o),
 		.mem_wdata_i(mem_wdata_o),
-		.mem_wd_i(mem_wd_o)
-
+		.mem_wd_i(mem_wd_o),
+        .stallreq(stallreq_from_id)
    );
 
 id_ex id_ex0(
           .rst(rst),
           .clk(clk),
+          .stall(stall),
           //从译码阶段ID模块传递的信息
           .id_aluop(id_aluop_o),
           .id_reg1(id_reg1_o),
@@ -227,13 +235,14 @@ ex ex0(
 	   .mem_addr_o(ex_mem_addr_o),
 	   .reg2_o(ex_reg2_o),
        .link_address_i(ex_link_address_i),
-	   .is_in_delayslot_i(ex_is_in_delayslot_i)
+	   .is_in_delayslot_i(ex_is_in_delayslot_i),
+       .stallreq(stallreq_from_ex)   
    );
 
 ex_mem ex_mem0(
     .rst(rst),
     .clk(clk),
-
+    .stall(stall),
     //来自执行阶段的EX模块的信息
     .ex_wdata(ex_wdata_o),
     .ex_wd(ex_wd_o),
@@ -303,6 +312,7 @@ mem mem0(
 mem_wb mem_wb0(
     .rst(rst),
     .clk(clk),
+    .stall(stall),
     .mem_wdata(mem_wdata_o),
     .mem_wd(mem_wd_o),
     .mem_wreg(mem_wreg_o),
@@ -330,6 +340,17 @@ hilo_reg hilo_reg0(
 		.hi_o(hi),
 		.lo_o(lo)	
 );
+
+ctrl ctrl0(
+		.rst(rst),
+	
+		.stallreq_from_id(stallreq_from_id),
+	
+  	//来自执行阶段的暂停请求
+		.stallreq_from_ex(stallreq_from_ex),
+
+		.stall(stall)       	
+	);
 
 regfile regfile0(
     .clk(clk),

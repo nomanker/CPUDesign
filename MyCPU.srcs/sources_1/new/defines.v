@@ -140,3 +140,6 @@
 
 `define InstValid 1'b0
 `define InstInvalid 1'b1
+
+`define Stop 1'b1
+`define NoStop 1'b0

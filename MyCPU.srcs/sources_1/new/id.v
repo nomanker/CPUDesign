@@ -39,7 +39,9 @@ module id(
            //处于访问阶段的指令的运行结果
            input wire mem_wreg_i,
            input wire[`RegBus]  mem_wdata_i,
-           input wire[`RegAddrBus] mem_wd_i
+           input wire[`RegAddrBus] mem_wd_i,
+
+           output wire                   stallreq	
        );
 wire[5:0] op= inst_i[31:26];
 wire[4:0] op2 = inst_i[10:6];
@@ -47,6 +49,8 @@ wire[5:0] op3 = inst_i[5:0];
 wire[4:0] op4 = inst_i[20:16];
 reg[`RegBus] imm;
 reg instvalid;
+
+assign stallreq = `NoStop;
 
 //inst_o的值就是译码阶段的指令
 assign inst_o = inst_i;

@@ -2,6 +2,9 @@
 `include "defines.v"
 module ex(
            input wire rst,
+           //发送到流线线暂停的请求模块
+           output reg										stallreq ,
+
            input [`AluOpBus] alu_control,
            input [`RegBus] alu_src1,
            input [`RegBus] alu_src2,

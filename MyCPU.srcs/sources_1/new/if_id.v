@@ -15,6 +15,10 @@ module if_id(
     //跳转指令需要拿到pc的的指令地址
     input wire[`InstAddrBus] if_pc,
     //跳转指令传到id的指令地址
+
+    //来自控制模块的信息
+	input wire[5:0]               stall,
+    
     output reg[`InstAddrBus] id_pc
     );
 
@@ -24,7 +28,10 @@ module if_id(
             // id_pc <= `ZeroWord;
             id_inst <=`ZeroWord;
             id_pc <= `ZeroWord;
-        end else begin 
+        end else if(stall[1] == `Stop && stall[2] == `NoStop) begin
+			id_pc <= `ZeroWord;
+			id_inst <= `ZeroWord;
+        end else if(stall[1] == `NoStop) begin 
             id_pc <=if_pc;
             id_inst <= if_inst;
             
