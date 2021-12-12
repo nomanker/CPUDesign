@@ -20,6 +20,10 @@ module ex(
            input  wire[`DoubleRegBus] div_result_i,
            input wire   div_ready_i, 
 
+           //来自乘法的输入
+           input wire[`DoubleRegBus] mult_result_i,
+           input wire mult_ready_i,
+
            output reg[`RegBus] alu_result,
            output reg[`RegAddrBus] wd_o,
            output reg wreg_o,
@@ -54,7 +58,13 @@ module ex(
            output reg[`RegBus] div_opdata1_o,
            output reg[`RegBus] div_opdata2_o,
            output reg div_start_o,
-           output reg signed_div_o
+           output reg signed_div_o,
+
+           //新增乘法模块的输入输出
+            output reg[`RegBus] mult_opdata1_o,
+            output reg[`RegBus] mult_opdata2_o,
+            output reg mult_start_o,
+            output reg signed_mult_o
 
        );
 wire[`RegBus] alu_src2_mux;
@@ -74,6 +84,7 @@ reg[`RegBus] LO;
 
 //是否有用除法运算导致流水线暂停
 reg stallreq_for_div;
+reg stallreq_for_mult;
 
 
 assign alu_src2_mux = ((alu_control==`SUB_OP)||(alu_control==`SLT_OP)||(alu_control==`SUBU_OP))?(~alu_src2)+1:alu_src2;
@@ -185,8 +196,8 @@ always @(*) begin
             end
             `MULT_OP,`MULTU_OP:begin
                 whilo_o <= `WriteEnable;
-                hi_o <= mulres[63:32];
-			    lo_o <= mulres[31:0];	
+                hi_o <= mult_result_i[63:32];
+			    lo_o <= mult_result_i[31:0];	
             end
             `MFHI_OP: begin
                 alu_result <= HI;
@@ -222,20 +233,20 @@ end
 
 //暂停流水线
 always @(*) begin
-    stallreq=stallreq_for_div;
+    stallreq=stallreq_for_div|stallreq_for_mult;
 end
 
 //DIV、DIVU指令	
 	always @ (*) begin
 		if(rst == `RstEnable) begin
 			stallreq_for_div <= `NoStop;
-	    div_opdata1_o <= `ZeroWord;
+	        div_opdata1_o <= `ZeroWord;
 			div_opdata2_o <= `ZeroWord;
 			div_start_o <= `DivStop;
 			signed_div_o <= 1'b0;
 		end else begin
 			stallreq_for_div <= `NoStop;
-	    div_opdata1_o <= `ZeroWord;
+	        div_opdata1_o <= `ZeroWord;
 			div_opdata2_o <= `ZeroWord;
 			div_start_o <= `DivStop;
 			signed_div_o <= 1'b0;	
@@ -287,4 +298,67 @@ end
 			endcase
 		end
 	end	
+
+//DIV、DIVU指令	
+	always @ (*) begin
+		if(rst == `RstEnable) begin
+			stallreq_for_mult <= `NoStop;
+	        mult_opdata1_o <= `ZeroWord;
+			mult_opdata2_o <= `ZeroWord;
+			mult_start_o <= `MultStop;
+			signed_mult_o <= 1'b0;
+		end else begin
+			stallreq_for_mult <= `NoStop;
+	        mult_opdata1_o <= `ZeroWord;
+			mult_opdata2_o <= `ZeroWord;
+			mult_start_o <= `DivStop;
+			signed_mult_o <= 1'b0;	
+			case (alu_control) 
+				`MULT_OP:		begin
+					if(mult_ready_i == `MultResultNotReady) begin
+	    			    mult_opdata1_o <= alu_src1;
+						mult_opdata2_o <= alu_src2;
+						mult_start_o <= `MultStart;
+						signed_mult_o <= 1'b1;
+						stallreq_for_mult <= `Stop;
+					end else if(mult_ready_i == `MultResultReady) begin
+	    			    mult_opdata1_o <= alu_src1;
+						mult_opdata2_o <= alu_src2;
+						mult_start_o <= `MultStop;
+						signed_mult_o <= 1'b1;
+						stallreq_for_mult <= `NoStop;
+					end else begin						
+	    			    mult_opdata1_o <= `ZeroWord;
+						mult_opdata2_o <= `ZeroWord;
+						mult_start_o <= `MultStop;
+						signed_mult_o <= 1'b0;
+						stallreq_for_mult <= `NoStop;
+					end					
+				end
+				`MULTU_OP:		begin
+					if(mult_ready_i == `MultResultNotReady) begin
+	    			    mult_opdata1_o <= alu_src1;
+						mult_opdata2_o <= alu_src2;
+						mult_start_o <= `MultStart;
+						signed_mult_o <= 1'b0;
+						stallreq_for_mult <= `Stop;
+					end else if(mult_ready_i == `MultResultReady) begin
+	    			    mult_opdata1_o <= alu_src1;
+						mult_opdata2_o <= alu_src2;
+						mult_start_o <= `MultStop;
+						signed_mult_o <= 1'b0;
+						stallreq_for_mult <= `NoStop;
+					end else begin						
+	    			    mult_opdata1_o <= `ZeroWord;
+						mult_opdata2_o <= `ZeroWord;
+						mult_start_o <= `MultStop;
+						signed_mult_o <= 1'b0;
+						stallreq_for_mult <= `NoStop;
+					end					
+				end
+				default: begin
+				end
+			endcase
+		end
+	end
 endmodule

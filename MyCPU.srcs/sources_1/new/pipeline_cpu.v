@@ -116,6 +116,15 @@ wire div_annul;
 wire signed_div;
 
 
+wire[`DoubleRegBus] mult_result;
+wire mult_ready;
+wire[`RegBus] mult_opdata1;
+wire[`RegBus] mult_opdata2;
+wire mult_start;
+wire mult_annul;
+wire signed_mult;
+
+
 wire[5:0] stall;
 wire stallreq_from_id;	
 wire stallreq_from_ex;
@@ -228,6 +237,10 @@ ex ex0(
         .div_result_i(div_result),
 		.div_ready_i(div_ready), 
 
+        //乘法模块
+        .mult_result_i(mult_result),
+		.mult_ready_i(mult_ready), 
+
 	   .wb_hi_i(wb_hi_i),
 	   .wb_lo_i(wb_lo_i),
 	   .wb_whilo_i(wb_whilo_i),
@@ -246,7 +259,13 @@ ex ex0(
         .div_opdata1_o(div_opdata1),
 		.div_opdata2_o(div_opdata2),
 		.div_start_o(div_start),
-		.signed_div_o(signed_div),	
+		.signed_div_o(signed_div),
+
+        //乘法
+        .mult_opdata1_o(mult_opdata1),
+		.mult_opdata2_o(mult_opdata2),
+		.mult_start_o(mult_start),
+		.signed_mult_o(signed_mult),	
 		
 
         //lw和sw
@@ -399,6 +418,19 @@ div div0(
 	
 		.result_o(div_result),
 		.ready_o(div_ready)
+);
+
+mult mult0(
+        .clk(clk),
+		.rst(rst),
+	
+		.signed_mult_i(signed_mult),
+		.opdata1_i(mult_opdata1),
+		.opdata2_i(mult_opdata2),
+		.start_i(mult_start),
+	
+		.result_o(mult_result),
+		.ready_o(mult_ready)
 );
 
 endmodule

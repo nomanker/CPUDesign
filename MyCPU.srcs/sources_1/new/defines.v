@@ -149,11 +149,21 @@
 `define DivByZero 2'b01
 `define DivOn 2'b10 
 `define DivEnd 2'b11
-
 `define DivResultReady     1'b1
 `define DivResultNotReady 1'b0
 `define DivStart 1'b1
 `define DivStop 1'b0
+
+//乘法模块
+`define MultFree 2'b00
+`define MultByZero 2'b01
+`define MultOn 2'b10
+`define MultEnd 2'b11
+
+`define MultResultReady     1'b1
+`define MultResultNotReady 1'b0
+`define MultStart 1'b1
+`define MultStop 1'b0
 
 `define EXE_DIV 6'b011010
 `define EXE_DIVU 6'b011011
